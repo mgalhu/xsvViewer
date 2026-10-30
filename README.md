@@ -32,10 +32,9 @@ preambles, and tables with thousands of columns.
 
 Until the plugin is listed in **Plugins > Plugins Admin**, install it by hand:
 
-1. Download `xsvViewer-1.0.0-x64.zip` from [Releases](https://github.com/mgalhu/xsvViewer/releases).
+1. Download the zip from [Releases](https://github.com/mgalhu/xsvViewer/releases).
 2. Close Notepad++.
-3. Create the folder `%PROGRAMFILES%\Notepad++\plugins\xsvViewer`. In a portable Notepad++, that is
-   `plugins\xsvViewer` in its own folder.
+3. Create the folder `%PROGRAMFILES%\Notepad++\plugins\xsvViewer`.
 4. Extract the zip into that folder, so that `xsvViewer.dll` sits directly in it.
 5. Right-click `xsvViewer.dll`, choose **Properties**, tick **Unblock** if it is shown, and click **OK**.
    Windows won't let Notepad++ load a downloaded DLL otherwise.

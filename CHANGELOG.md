@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1
+
+- The package now carries the plain GPL-3.0 text. 1.0.0 had Notepad++'s own license file by mistake.
+- Installation follows the Notepad++ manual, including unblocking a downloaded DLL.
+
 ## 1.0.0
 
 First release.

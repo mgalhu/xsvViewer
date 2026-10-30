@@ -490,7 +490,7 @@ void commandGuide() { ShellExecuteW(g_npp._nppHandle, L"open", kGuideUrl, nullpt
 
 void commandAbout() {
     MessageBoxW(g_npp._nppHandle,
-                L"xsvViewer++ 1.0\n\n"
+                L"xsvViewer++ 1.0.1\n\n"
                 L"Shows delimited text files as an adjustable table.\n\n"
                 L"Ctrl+Alt+T\ttable / text\n"
                 L"Ctrl+Alt+Shift+T\tdocked panel\n"

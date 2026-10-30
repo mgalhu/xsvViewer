@@ -8,7 +8,6 @@ Needs the Visual Studio 2022 Build Tools with the C++ x64 workload. CMake and Ni
 .\build.ps1             # build, run the unit tests, copy the DLL to dist\xsvViewer\
 .\build.ps1 -Config Debug
 .\install.ps1           # copy into the installed Notepad++ (asks for administrator rights)
-.\install.ps1 -Portable # or set up a portable Notepad++ in .\portable
 ```
 
 The DLL links the C runtime statically, so it needs no redistributable.

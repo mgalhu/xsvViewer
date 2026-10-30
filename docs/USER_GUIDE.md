@@ -25,9 +25,8 @@ xsvViewer++ needs the 64-bit Notepad++, version 8.9.8.1 or later. **? > About No
 **With Plugins Admin**, once the plugin is listed there: open **Plugins > Plugins Admin**, tick
 **xsvViewer++** on the **Available** tab, and click **Install**. Notepad++ restarts with the plugin.
 
-**By hand:** download `xsvViewer-1.0.0-x64.zip` from
-[Releases](https://github.com/mgalhu/xsvViewer/releases), and with Notepad++ closed, extract it so that
-the DLL ends up here:
+**By hand:** download the zip from [Releases](https://github.com/mgalhu/xsvViewer/releases), and with
+Notepad++ closed, extract it so that the DLL ends up here:
 
 | Notepad++ | Path |
 | --- | --- |
@@ -41,7 +40,8 @@ Then right-click `xsvViewer.dll`, choose **Properties**, tick **Unblock** if it 
 This copies only the DLL, which is all the plugin needs, but leaves out this guide.
 
 Writing to `Program Files` needs administrator rights. For Plugins Admin or Import, that may mean
-starting Notepad++ with **Run as administrator**. Without those rights, a portable Notepad++ works.
+starting Notepad++ with **Run as administrator**. On a managed PC, ask whoever looks after it to install
+the plugin.
 
 **To remove it:** use **Plugins > Plugins Admin**, tab **Installed**, then **Remove**. By hand, delete the
 `xsvViewer` folder while Notepad++ is closed. Your settings stay behind in the files listed under
