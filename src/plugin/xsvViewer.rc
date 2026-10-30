@@ -1,0 +1,64 @@
+#include <windows.h>
+#include "resource.h"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1,0,0,0
+PRODUCTVERSION 1,0,0,0
+FILEFLAGSMASK 0x3fL
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_DLL
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "xsvViewer++ - CSV/TSV table viewer for Notepad++"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "xsvViewer"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Markus Galhuber. GPL-3.0."
+            VALUE "OriginalFilename", "xsvViewer.dll"
+            VALUE "ProductName", "xsvViewer++"
+            VALUE "ProductVersion", "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+IDD_OPTIONS DIALOGEX 0, 0, 340, 300
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "xsvViewer++ Options"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    CONTROL "", IDC_TABS, "SysTabControl32", WS_TABSTOP, 6, 6, 328, 268
+    PUSHBUTTON "Reset to defaults", IDC_RESET, 6, 280, 80, 14
+    DEFPUSHBUTTON "OK", IDOK, 228, 280, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 284, 280, 50, 14
+END
+
+IDD_COLUMNS DIALOGEX 0, 0, 260, 280
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Columns"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    EDITTEXT IDC_COLUMN_SEARCH, 6, 6, 188, 13, ES_AUTOHSCROLL
+    CONTROL "", IDC_COLUMN_LIST, "SysListView32", LVS_REPORT | LVS_NOCOLUMNHEADER | LVS_SHOWSELALWAYS | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 6, 24, 188, 250
+    PUSHBUTTON "Show all", IDC_COLUMN_SHOW_ALL, 200, 24, 54, 14
+    PUSHBUTTON "Hide all", IDC_COLUMN_HIDE_ALL, 200, 42, 54, 14
+    PUSHBUTTON "Move up", IDC_COLUMN_UP, 200, 68, 54, 14
+    PUSHBUTTON "Move down", IDC_COLUMN_DOWN, 200, 86, 54, 14
+    DEFPUSHBUTTON "Close", IDOK, 200, 260, 54, 14
+END
+
+IDD_PROMPT DIALOGEX 0, 0, 180, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "xsvViewer++"
+FONT 9, "Segoe UI", 400, 0, 0x1
+BEGIN
+    LTEXT "", IDC_PROMPT_LABEL, 6, 8, 110, 10
+    EDITTEXT IDC_PROMPT_VALUE, 120, 6, 54, 13, ES_NUMBER | ES_AUTOHSCROLL
+    DEFPUSHBUTTON "OK", IDOK, 66, 42, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 124, 42, 50, 14
+END
