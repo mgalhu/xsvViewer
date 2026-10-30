@@ -1,21 +1,28 @@
-# Runs the end-to-end tests against a portable Notepad++ on a hidden desktop.
-#   .\run.ps1 -Npp <folder of a portable Notepad++> -Work <scratch folder> [-Scenario name]
-# The portable copy keeps its own settings, so nothing here touches an installed Notepad++.
+# Runs the end-to-end tests against a Notepad++ on a hidden desktop.
+#   .\run.ps1 -Npp <folder of a Notepad++ kept for testing> -Work <scratch folder> [-Scenario name]
+# That copy keeps its own settings, so nothing here touches an installed Notepad++.
+#
+# The pluginsAdmin scenario installs from the public release, so the plugin must not be copied in:
+#   .\run.ps1 -Npp <folder> -Work <scratch folder> -Scenario pluginsAdmin -Exe notepad++.x64.dbg.exe -NoDeploy
 param(
     [Parameter(Mandatory)] [string] $Npp,
     [Parameter(Mandatory)] [string] $Work,
     [string] $Scenario = 'all',
-    [string] $Dll = (Join-Path $PSScriptRoot '..\..\build\Release\xsvViewer.dll')
+    [string] $Dll = (Join-Path $PSScriptRoot '..\..\build\Release\xsvViewer.dll'),
+    [string] $Exe = 'notepad++.exe',
+    [switch] $NoDeploy
 )
 $ErrorActionPreference = 'Stop'
 
-$target = Join-Path $Npp 'plugins\xsvViewer'
-New-Item -ItemType Directory -Force $target | Out-Null
-Copy-Item $Dll $target -Force
+if (-not $NoDeploy) {
+    $target = Join-Path $Npp 'plugins\xsvViewer'
+    New-Item -ItemType Directory -Force $target | Out-Null
+    Copy-Item $Dll $target -Force
 
-$shimTarget = Join-Path $Npp 'plugins\xsvTestShim'
-New-Item -ItemType Directory -Force $shimTarget | Out-Null
-Copy-Item (Join-Path (Split-Path $Dll) 'xsvTestShim.dll') $shimTarget -Force
+    $shimTarget = Join-Path $Npp 'plugins\xsvTestShim'
+    New-Item -ItemType Directory -Force $shimTarget | Out-Null
+    Copy-Item (Join-Path (Split-Path $Dll) 'xsvTestShim.dll') $shimTarget -Force
+}
 
 $samples = Join-Path $Work 'samples'
 $shots = Join-Path $Work 'shots'
@@ -31,5 +38,5 @@ $references = @(
 $sources = (Join-Path $PSScriptRoot 'NppDriver.cs'), (Join-Path $PSScriptRoot 'GuiTests.cs')
 Add-Type -Path $sources -ReferencedAssemblies $references -ErrorAction Stop
 
-$failures = [GuiTests]::Run((Join-Path $Npp 'notepad++.exe'), $samples, $shots, $Scenario)
+$failures = [GuiTests]::Run((Join-Path $Npp $Exe), $samples, $shots, $Scenario)
 exit $failures

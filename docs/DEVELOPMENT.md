@@ -87,12 +87,12 @@ file path, stays out.
    About text in `PluginMain.cpp`, and add it to `CHANGELOG.md`.
 2. Run the GUI tests, ideally against a build from a clean clone.
 3. Run `.\release.ps1`. It builds and runs the unit tests, then writes to `dist\`:
-   - `xsvViewer-<version>-x64.zip`, with the DLL at the root and the guide in `doc\`, which Plugins Admin
-     installs into `plugins\doc\xsvViewer`
+   - `xsvViewer-<version>-x64.zip`, with the DLL at the root and the guide in `doc\`. The updater unpacks
+     it as it is, to `plugins\xsvViewer\doc`, not to `plugins\doc\xsvViewer` as the manual says.
    - `pl-entry.json`, the entry for the plugin list, with the zip's SHA-256
-4. Create a GitHub release with that zip, tagged `v<version>`.
-5. [Test it locally](https://npp-user-manual.org/docs/plugins/#test-your-plugins-locally) in Plugins Admin
-   with a debug build of Notepad++ and an edited `nppPluginList.json`: install, use, remove.
+4. Create a GitHub release with that zip, tagged `v<version>`. Published tags stay as they are: a fix gets
+   a new version.
+5. [Test it locally](https://npp-user-manual.org/docs/plugins/#test-your-plugins-locally). See below.
 6. Add or update the entry in `src/pl.x64.json` of
    [nppPluginList](https://github.com/notepad-plus-plus/nppPluginList) in a pull request. Change nothing
    but that file. The version must match the DLL exactly, and the
@@ -100,3 +100,20 @@ file path, stays out.
    rest.
 7. Announce new features in the
    [plugin development forum](https://community.notepad-plus-plus.org/category/5/plugin-development).
+
+### The local Plugins Admin test
+
+The `pluginsAdmin` scenario installs from the public release through Plugins Admin, uses the plugin, and
+removes it again, with the updater doing the download and the hash check. It needs a folder set up as the
+manual describes:
+
+1. Unzip the portable Notepad++ of the version to test.
+2. Add the debug build as `notepad++.x64.dbg.exe`. The manual's direct link was gone at the time of writing,
+   so take the artifact `Notepad++.MSVC.x64.Debug` from the Actions run of that release's commit.
+3. Replace `updater\GUP.exe` with the artifact `gup_exe_x64_dbg` from the
+   [wingup](https://github.com/notepad-plus-plus/wingup/actions) master build.
+4. Save `src/pl.x64.json` of nppPluginList with your entry added as `plugins\Config\nppPluginList.json`.
+
+```powershell
+.\tests\gui\run.ps1 -Npp <folder> -Work <scratch folder> -Scenario pluginsAdmin -Exe notepad++.x64.dbg.exe -NoDeploy
+```

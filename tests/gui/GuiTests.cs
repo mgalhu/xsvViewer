@@ -51,6 +51,16 @@ public static class GuiTests {
             NppDriver.Run("xsvtest_docs_" + Environment.ProcessId, Docs);
             return 0;
         }
+        if (which == "pluginsAdmin") {
+            Console.WriteLine(which);
+            try {
+                NppDriver.Run("xsvtest_admin_" + Environment.ProcessId, PluginsAdmin);
+            } catch (Exception e) {
+                Check("scenario finished", false, e.Message.Split('\n')[0]);
+            }
+            Console.WriteLine($"{passed} passed, {failed} failed");
+            return failed;
+        }
         foreach (var (name, scenario) in scenarios) {
             if (which != "all" && which != name) continue;
             Console.WriteLine(name);
@@ -246,6 +256,103 @@ public static class GuiTests {
         var header = ExportView(d)[0];
         Check("a changed encoding reaches the table", header != "Name\tGröße\tWert", header);
         Check("closes cleanly", d.Close());
+    }
+
+    // The manual's "Test your plugins locally": a debug Notepad++ reads nppPluginList.json, and the
+    // plugin goes the way users will get it. Plugins Admin passes the release URL and hash to the
+    // updater, Notepad++ quits, the updater fetches and checks the zip, and restarts Notepad++.
+    // Not part of "all". Needs a prepared folder and -Exe, -NoDeploy; see docs\DEVELOPMENT.md.
+    static void PluginsAdmin(NppDriver d) {
+        const int IDM_SETTING_PLUGINADM = 48015, SearchEdit = 5502, InstallButton = 5503, RemoveButton = 5505;
+        const uint LVM_GETNEXTITEM = 0x100C;
+        string folder = Path.GetDirectoryName(exe);
+        string dll = Path.Combine(folder, "plugins", "xsvViewer", "xsvViewer.dll");
+        string guide = Path.Combine(folder, "plugins", "xsvViewer", "doc", "USER_GUIDE.md");
+
+        Check("the plugin is not there before", !File.Exists(dll));
+        d.Start(exe, "-multiInst -nosession");
+        d.Settle(800);
+        Check("and not in the Plugins menu", d.PluginMenu("xsvViewer").Count == 0);
+
+        // Install, from the Available tab.
+        d.Post(d.Main, WM_COMMAND, IDM_SETTING_PLUGINADM);
+        var admin = d.WaitDialog(6000);
+        Check("Plugins Admin opens", admin != IntPtr.Zero);
+        if (admin == IntPtr.Zero) return;
+        d.SetText(d.Item(admin, SearchEdit), "xsvViewer");
+        d.Settle(400);
+        var list = d.Children(admin, "SysListView32").First(NppDriver.Visible);
+        int item = (int)d.Send(list, LVM_GETNEXTITEM, -1, 2);
+        Check("the list offers xsvViewer++", item >= 0, "index " + item);
+        if (item < 0) return;
+        d.ListCheck(list, item);
+        d.Settle(200);
+        d.Repaint(admin);
+        Thread.Sleep(200);
+        d.Screenshot(admin, Shot("admin_available"));
+
+        var install = d.Item(admin, InstallButton);
+        d.Post(admin, WM_COMMAND, InstallButton, (long)install);
+        var confirm = d.WaitDialogExcept(admin);
+        Check("Notepad++ asks before it quits", confirm != IntPtr.Zero);
+        if (confirm == IntPtr.Zero) return;
+        var quitting = d.Process;
+        d.Post(confirm, WM_COMMAND, IDYES);
+        Check("Notepad++ quits for the updater", quitting.WaitForExit(15000));
+
+        // The updater downloads from the public release, checks the SHA-256, and unpacks.
+        var clock = Stopwatch.StartNew();
+        bool back = d.AttachToNew(90000);
+        Console.WriteLine($"  updater took {clock.ElapsedMilliseconds} ms");
+        if (!back) {
+            foreach (var w in d.UpdaterWindows()) Console.WriteLine("    window: " + w);
+            Check("Notepad++ comes back after installing", false);
+            return;
+        }
+        Check("Notepad++ comes back after installing", true);
+        Check("the DLL landed in its folder", File.Exists(dll), dll);
+        Check("the guide came with it", File.Exists(guide), guide);
+        var menu = d.PluginMenu("xsvViewer");
+        Check("the plugin is in the Plugins menu", menu.ContainsKey("Table / Text"), string.Join(", ", menu.Keys));
+        Check("it closes cleanly", d.Close(15000));
+
+        // Use it.
+        d.Start(exe, Open("sample.tsv"));
+        d.Settle(700);
+        var host = VisibleHost(d);
+        Check("a tsv opens as a table", host != IntPtr.Zero);
+        Check("the table has its rows", ExportView(d).Length == 121);
+        d.Screenshot(d.Main, Shot("admin_installed"));
+
+        // Remove, from the Installed tab.
+        d.Post(d.Main, WM_COMMAND, IDM_SETTING_PLUGINADM);
+        admin = d.WaitDialog(6000);
+        Check("Plugins Admin opens again", admin != IntPtr.Zero);
+        if (admin == IntPtr.Zero) return;
+        d.Send(d.Children(admin, "SysTabControl32").First(), TCM_SETCURFOCUS, 2);
+        Thread.Sleep(300);
+        d.SetText(d.Item(admin, SearchEdit), "xsvViewer");
+        d.Settle(400);
+        list = d.Children(admin, "SysListView32").First(NppDriver.Visible);
+        item = (int)d.Send(list, LVM_GETNEXTITEM, -1, 2);
+        Check("it is listed as installed", item >= 0, "index " + item);
+        if (item < 0) return;
+        d.ListCheck(list, item);
+        d.Settle(200);
+        var remove = d.Item(admin, RemoveButton);
+        d.Post(admin, WM_COMMAND, RemoveButton, (long)remove);
+        confirm = d.WaitDialogExcept(admin);
+        if (confirm == IntPtr.Zero) { Check("Notepad++ asks before removing", false); return; }
+        quitting = d.Process;
+        d.Post(confirm, WM_COMMAND, IDYES);
+        quitting.WaitForExit(15000);
+        back = d.AttachToNew(60000);
+        Check("Notepad++ comes back after removing", back);
+        if (!back) return;
+        Check("the plugin folder is gone", !Directory.Exists(Path.GetDirectoryName(dll)));
+        Check("the guide is gone", !File.Exists(guide));
+        Check("and the menu entry", d.PluginMenu("xsvViewer").Count == 0);
+        Check("closes cleanly", d.Close(15000));
     }
 
     // Regenerates the pictures in docs\images. Not part of "all"; run it with -Scenario docs.

@@ -266,6 +266,69 @@ public sealed class NppDriver : IDisposable {
         bitmap.Save(path, ImageFormat.Png);
     }
 
+    [DllImport("kernel32")] static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32")] static extern IntPtr VirtualAllocEx(IntPtr process, IntPtr address, IntPtr size, uint type, uint protect);
+    [DllImport("kernel32")] static extern bool VirtualFreeEx(IntPtr process, IntPtr address, IntPtr size, uint type);
+    [DllImport("kernel32")] static extern bool WriteProcessMemory(IntPtr process, IntPtr address, byte[] data, IntPtr size, out IntPtr written);
+    [DllImport("kernel32")] static extern bool CloseHandle(IntPtr handle);
+
+    // Ticks the checkbox of a list view item. The LVITEM has to live inside the other process.
+    public void ListCheck(IntPtr list, int index) {
+        const uint LVM_SETITEMSTATE = 0x102B, VmAccess = 0x0008 | 0x0020, Commit = 0x1000, ReadWrite = 4, Release = 0x8000;
+        var process = OpenProcess(VmAccess, false, Process.Id);
+        var memory = VirtualAllocEx(process, IntPtr.Zero, (IntPtr)128, Commit, ReadWrite);
+        var item = new byte[128];
+        BitConverter.GetBytes(2u << 12).CopyTo(item, 12);    // state: checkbox image 2, checked
+        BitConverter.GetBytes(0xF000u).CopyTo(item, 16);     // stateMask: LVIS_STATEIMAGEMASK
+        WriteProcessMemory(process, memory, item, (IntPtr)item.Length, out _);
+        Send(list, LVM_SETITEMSTATE, index, (long)memory);
+        VirtualFreeEx(process, memory, IntPtr.Zero, Release);
+        CloseHandle(process);
+    }
+
+    // After Notepad++ quits for the updater, the updater starts a new one by itself.
+    public bool WaitForExit(int timeoutMs) => Process.WaitForExit(timeoutMs);
+
+    public bool AttachToNew(int timeoutMs) {
+        Main = IntPtr.Zero;
+        for (int waited = 0; waited < timeoutMs && Main == IntPtr.Zero; waited += 200) {
+            Thread.Sleep(200);
+            EnumDesktopWindows(desktop, (h, l) => {
+                if (ClassOf(h) == "Notepad++" && IsWindowVisible(h)) { Main = h; return false; }
+                return true;
+            }, IntPtr.Zero);
+        }
+        if (Main == IntPtr.Zero) return false;
+        Thread0 = GetWindowThreadProcessId(Main, out int pid);
+        Process = Process.GetProcessById(pid);
+        processHandle = OpenProcess(0x1000 | 0x00100000, false, pid);  // query limited information, synchronize
+        attached = false;
+        Thread.Sleep(1200);
+        var editors = Children(Main, "Scintilla");
+        Sci0 = editors[0]; Sci1 = editors[1];
+        return true;
+    }
+
+    // Names of the windows the updater opened, for reporting what it is doing.
+    public List<string> UpdaterWindows() {
+        var names = new List<string>();
+        EnumDesktopWindows(desktop, (h, l) => {
+            if (IsWindowVisible(h)) names.Add(ClassOf(h) + ": " + TextOf(h));
+            return true;
+        }, IntPtr.Zero);
+        return names;
+    }
+
+    public IntPtr WaitDialogExcept(IntPtr known, int timeoutMs = 4000) {
+        for (int waited = 0; waited < timeoutMs; waited += 50) {
+            foreach (var dialog in TopLevel("#32770")) {
+                if (dialog != known) return dialog;
+            }
+            Thread.Sleep(50);
+        }
+        return IntPtr.Zero;
+    }
+
     public IntPtr WaitDialog(int timeoutMs = 3000) {
         for (int waited = 0; waited < timeoutMs; waited += 50) {
             var dialogs = TopLevel("#32770");

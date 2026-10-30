@@ -47,7 +47,7 @@ the plugin.
 `xsvViewer` folder while Notepad++ is closed. Your settings stay behind in the files listed under
 [Where settings are kept](#where-settings-are-kept); delete those too for a clean start.
 
-When installed through Plugins Admin, a copy of this guide is in `plugins\doc\xsvViewer`.
+A copy of this guide comes with the plugin, in `plugins\xsvViewer\doc`.
 
 ## Table and text
 
